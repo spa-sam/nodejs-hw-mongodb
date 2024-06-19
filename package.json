@@ -1,7 +1,7 @@
 {
   "name": "nodejs-basics",
   "version": "1.0.0",
-  "description": "",
+  "description": "LDouxiAGiUqYqabd mongodb+srv://stspasam:LDouxiAGiUqYqabd@cluster0.szqdb83.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
   "type": "module",
   "main": "src/index.js",
   "scripts": {
