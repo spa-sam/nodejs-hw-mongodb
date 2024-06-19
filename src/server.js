@@ -3,7 +3,7 @@
 import express from 'express';
 import cors from 'cors';
 import pino from 'pino';
-import contactsRouter from './routers/contactsRouter.js';
+import contactsService from './services/contactsService.js';
 
 const logger = pino();
 
@@ -17,10 +17,44 @@ export default function setupServer() {
     next();
   });
 
-  // Реєстрація роута для контактів
-  app.use('/contacts', contactsRouter);
+  // Обробка маршруту GET /contacts
+  app.get('/contacts', async (req, res) => {
+    try {
+      const contacts = await contactsService.getAllContacts();
+      res.status(200).json({
+        status: 'success',
+        message: 'Successfully found contacts!',
+        data: contacts,
+      });
+    } catch (error) {
+      res.status(500).json({ status: 'error', message: error.message });
+    }
+  });
 
-  // Обробка неіснуючих роутів
+  // Обробка маршруту GET /contacts/:contactId
+  app.get('/contacts/:contactId', async (req, res) => {
+    try {
+      const contactId = req.params.contactId;
+      const contact = await contactsService.getContactById(contactId);
+
+      if (!contact) {
+        return res.status(404).json({
+          status: 'error',
+          message: `Contact with id ${contactId} not found`,
+        });
+      }
+
+      res.status(200).json({
+        status: 'success',
+        message: `Successfully found contact with id ${contactId}!`,
+        data: contact,
+      });
+    } catch (error) {
+      res.status(500).json({ status: 'error', message: error.message });
+    }
+  });
+
+  // Обробка неіснуючих маршрутів
   app.use((req, res) => {
     res.status(404).json({ message: 'Not found' });
   });
