@@ -22,12 +22,12 @@ export default function setupServer() {
     try {
       const contacts = await contactsService.getAllContacts();
       res.status(200).json({
-        status: 'success',
+        status: 200,
         message: 'Successfully found contacts!',
         data: contacts,
       });
     } catch (error) {
-      res.status(500).json({ status: 'error', message: error.message });
+      res.status(500).json({ status: 500, message: error.message });
     }
   });
 
@@ -39,24 +39,24 @@ export default function setupServer() {
 
       if (!contact) {
         return res.status(404).json({
-          status: 'error',
+          status: 404,
           message: `Contact with id ${contactId} not found`,
         });
       }
 
       res.status(200).json({
-        status: 'success',
+        status: 200,
         message: `Successfully found contact with id ${contactId}!`,
         data: contact,
       });
     } catch (error) {
-      res.status(500).json({ status: 'error', message: error.message });
+      res.status(500).json({ status: 500, message: error.message });
     }
   });
 
   // Обробка неіснуючих маршрутів
   app.use((req, res) => {
-    res.status(404).json({ message: 'Not found' });
+    res.status(404).json({ status: 404, message: 'Not found' });
   });
 
   // Запуск серверу на порті, вказаному через змінну оточення PORT або 3000
