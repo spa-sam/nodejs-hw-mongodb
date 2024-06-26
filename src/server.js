@@ -1,65 +1,38 @@
-// src/server.js
-
 import express from 'express';
 import cors from 'cors';
 import pino from 'pino';
-import contactsService from './services/contactsService.js';
+import createError from 'http-errors';
+import contactsRouter from './routers/contacts.js';
 
 const logger = pino();
 
 export default function setupServer() {
   const app = express();
 
-  // Налаштування cors та логгера pino
   app.use(cors());
+  app.use(express.json());
   app.use((req, res, next) => {
     logger.info(req);
     next();
   });
 
-  // Обробка маршруту GET /contacts
-  app.get('/contacts', async (req, res) => {
-    try {
-      const contacts = await contactsService.getAllContacts();
-      res.status(200).json({
-        status: 200,
-        message: 'Successfully found contacts!',
-        data: contacts,
-      });
-    } catch (error) {
-      res.status(500).json({ status: 500, message: error.message });
-    }
+  app.use('/contacts', contactsRouter);
+
+  // Middleware для обробки неіснуючих маршрутів (notFoundHandler)
+  app.use((req, res, next) => {
+    next(createError(404, 'Route not found'));
   });
 
-  // Обробка маршруту GET /contacts/:contactId
-  app.get('/contacts/:contactId', async (req, res) => {
-    try {
-      const contactId = req.params.contactId;
-      const contact = await contactsService.getContactById(contactId);
-
-      if (!contact) {
-        return res.status(404).json({
-          status: 404,
-          message: `Contact with id ${contactId} not found`,
-        });
-      }
-
-      res.status(200).json({
-        status: 200,
-        message: `Successfully found contact with id ${contactId}!`,
-        data: contact,
-      });
-    } catch (error) {
-      res.status(500).json({ status: 500, message: error.message });
-    }
+  // Middleware для обробки помилок (errorHandler)
+  app.use((err, req, res, next) => {
+    const status = err.status || 500;
+    res.status(status).json({
+      status: status,
+      message: 'Something went wrong',
+      data: err.message,
+    });
   });
 
-  // Обробка неіснуючих маршрутів
-  app.use((req, res) => {
-    res.status(404).json({ status: 404, message: 'Not found' });
-  });
-
-  // Запуск серверу на порті, вказаному через змінну оточення PORT або 3000
   const port = process.env.PORT || 3000;
   app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
