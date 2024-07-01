@@ -1,18 +1,8 @@
 import express from 'express';
 import * as contactsController from '../controllers/contacts.js';
+import { ctrlWrapper } from '../utils/ctrlWrapper.js';
 
 const router = express.Router();
-
-// Функція ctrlWrapper
-const ctrlWrapper = (ctrl) => {
-  return async (req, res, next) => {
-    try {
-      await ctrl(req, res, next);
-    } catch (error) {
-      next(error);
-    }
-  };
-};
 
 router.get('/', ctrlWrapper(contactsController.getAllContacts));
 router.get('/:contactId', ctrlWrapper(contactsController.getContactById));
