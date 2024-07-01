@@ -1,8 +1,20 @@
 import Contact from '../db/contactModel.js';
+import { SORT_ORDER } from '../constants/index.js';
 
-const getAllContacts = async () => {
-  const contacts = await Contact.find();
-  return contacts;
+const getAllContacts = async (page, perPage, sortParams, filterParams) => {
+  const skip = (page - 1) * perPage;
+  const { sortBy, sortOrder } = sortParams;
+
+  const sortOptions = {
+    [sortBy]: sortOrder === SORT_ORDER.DESC ? -1 : 1,
+  };
+
+  const contacts = await Contact.find(filterParams)
+    .sort(sortOptions)
+    .skip(skip)
+    .limit(perPage);
+  const totalItems = await Contact.countDocuments(filterParams);
+  return { contacts, totalItems };
 };
 
 const getContactById = async (contactId) => {
