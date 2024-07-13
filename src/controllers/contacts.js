@@ -11,6 +11,7 @@ export const getAllContacts = async (req, res) => {
   const filterParams = parseFilterParams(req.query);
 
   const { contacts, totalItems } = await contactsService.getAllContacts(
+    req.user._id,
     page,
     perPage,
     sortParams,
@@ -33,7 +34,7 @@ export const getAllContacts = async (req, res) => {
 
 export const getContactById = async (req, res) => {
   const contactId = req.params.contactId;
-  const contact = await contactsService.getContactById(contactId);
+  const contact = await contactsService.getContactById(req.user._id, contactId);
 
   if (!contact) {
     throw createError(404, 'Contact not found');
@@ -53,7 +54,7 @@ export const createContact = async (req, res) => {
     throw createError(400, 'Name and phoneNumber are required');
   }
 
-  const newContact = await contactsService.createContact({
+  const newContact = await contactsService.createContact(req.user._id, {
     name,
     phoneNumber,
     email,
@@ -72,13 +73,17 @@ export const updateContact = async (req, res) => {
   const { contactId } = req.params;
   const { name, phoneNumber, email, isFavourite, contactType } = req.body;
 
-  const updatedContact = await contactsService.updateContact(contactId, {
-    name,
-    phoneNumber,
-    email,
-    isFavourite,
-    contactType,
-  });
+  const updatedContact = await contactsService.updateContact(
+    req.user._id,
+    contactId,
+    {
+      name,
+      phoneNumber,
+      email,
+      isFavourite,
+      contactType,
+    },
+  );
 
   if (!updatedContact) {
     throw createError(404, 'Contact not found');
@@ -93,7 +98,10 @@ export const updateContact = async (req, res) => {
 
 export const deleteContact = async (req, res) => {
   const { contactId } = req.params;
-  const deletedContact = await contactsService.deleteContact(contactId);
+  const deletedContact = await contactsService.deleteContact(
+    req.user._id,
+    contactId,
+  );
 
   if (!deletedContact) {
     throw createError(404, 'Contact not found');
