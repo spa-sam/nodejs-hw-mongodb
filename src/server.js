@@ -1,9 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 import pino from 'pino';
-import contactsRouter from './routers/contacts.js';
+import { router } from './routers/index.js';
 import { errorHandler } from './middlewares/errorHandlers.js';
 import { notFoundHandler } from './middlewares/notFoundHandler.js';
+import cookieParser from 'cookie-parser';
 
 const logger = pino();
 
@@ -17,7 +18,8 @@ export default function setupServer() {
     next();
   });
 
-  app.use('/contacts', contactsRouter);
+  app.use(cookieParser());
+  app.use(router);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
