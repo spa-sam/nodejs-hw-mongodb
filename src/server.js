@@ -5,6 +5,7 @@ import { router } from './routers/index.js';
 import { errorHandler } from './middlewares/errorHandlers.js';
 import { notFoundHandler } from './middlewares/notFoundHandler.js';
 import cookieParser from 'cookie-parser';
+import { UPLOAD_DIR } from './constants/index.js';
 
 const logger = pino();
 
@@ -17,6 +18,8 @@ export default function setupServer() {
     logger.info(req);
     next();
   });
+
+  app.use('/uploads', express.static(UPLOAD_DIR));
 
   app.use(cookieParser());
   app.use(router);

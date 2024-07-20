@@ -8,27 +8,34 @@ import {
 } from '../validation/contacts.js';
 import { isValidId } from '../middlewares/isValidId.js';
 import { authenticate } from '../middlewares/authenticate.js';
+import { upload } from '../middlewares/multer.js';
 
 const router = express.Router();
 router.use(authenticate);
 
 router.get('/', ctrlWrapper(contactsController.getAllContacts));
+
 router.get(
   '/:contactId',
   isValidId,
   ctrlWrapper(contactsController.getContactById),
 );
+
 router.post(
   '/',
+  upload.single('photo'),
   validateBody(createContactSchema),
   ctrlWrapper(contactsController.createContact),
 );
+
 router.patch(
   '/:contactId',
   isValidId,
+  upload.single('photo'),
   validateBody(updateContactSchema),
   ctrlWrapper(contactsController.updateContact),
 );
+
 router.delete(
   '/:contactId',
   isValidId,
