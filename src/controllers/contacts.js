@@ -4,6 +4,9 @@ import { parsePaginationParams } from '../utils/parsePaginationParams.js';
 import { calculatePaginationData } from '../utils/calculatePaginationData.js';
 import { parseSortParams } from '../utils/parseSortParams.js';
 import { parseFilterParams } from '../utils/parseFilterParams.js';
+import { saveFileToCloudinary } from '../utils/saveFileToCloudinary.js';
+import { saveFileToUploadDir } from '../utils/saveFileToUploadDir.js';
+import { env } from '../utils/env.js';
 
 export const getAllContacts = async (req, res) => {
   const { page, perPage } = parsePaginationParams(req.query);
@@ -49,6 +52,15 @@ export const getContactById = async (req, res) => {
 
 export const createContact = async (req, res) => {
   const { name, phoneNumber, email, isFavourite, contactType } = req.body;
+  let photoUrl;
+
+  if (req.file) {
+    if (env('ENABLE_CLOUDINARY') === 'true') {
+      photoUrl = await saveFileToCloudinary(req.file);
+    } else {
+      photoUrl = await saveFileToUploadDir(req.file);
+    }
+  }
 
   if (!name || !phoneNumber) {
     throw createError(400, 'Name and phoneNumber are required');
@@ -60,6 +72,7 @@ export const createContact = async (req, res) => {
     email,
     isFavourite,
     contactType,
+    photo: photoUrl,
   });
 
   res.status(201).json({
@@ -72,6 +85,15 @@ export const createContact = async (req, res) => {
 export const updateContact = async (req, res) => {
   const { contactId } = req.params;
   const { name, phoneNumber, email, isFavourite, contactType } = req.body;
+  let photoUrl;
+
+  if (req.file) {
+    if (env('ENABLE_CLOUDINARY') === 'true') {
+      photoUrl = await saveFileToCloudinary(req.file);
+    } else {
+      photoUrl = await saveFileToUploadDir(req.file);
+    }
+  }
 
   const updatedContact = await contactsService.updateContact(
     req.user._id,
@@ -82,6 +104,7 @@ export const updateContact = async (req, res) => {
       email,
       isFavourite,
       contactType,
+      photo: photoUrl,
     },
   );
 

@@ -1,9 +1,12 @@
 import bcrypt from 'bcrypt';
 import createHttpError from 'http-errors';
 import { randomBytes } from 'crypto';
+import jwt from 'jsonwebtoken';
+import nodemailer from 'nodemailer';
 import { UserModel } from '../db/models/user.js';
 import { SessionModel } from '../db/models/session.js';
 import { FIFTEEN_MINUTES, ONE_DAY } from '../constants/index.js';
+import { env } from '../utils/env.js';
 
 const createSession = () => {
   const accessToken = randomBytes(30).toString('base64');
@@ -81,4 +84,59 @@ export const refreshUsersSession = async ({ sessionId, refreshToken }) => {
 
 export const logoutUser = async (sessionId) => {
   await SessionModel.deleteOne({ _id: sessionId });
+};
+
+export const sendResetEmail = async (email) => {
+  const user = await UserModel.findOne({ email });
+  if (!user) {
+    throw createHttpError(404, 'User not found!');
+  }
+
+  const token = jwt.sign({ email }, env('JWT_SECRET'), { expiresIn: '5m' });
+  const resetLink = `${env('APP_DOMAIN')}/reset-password?token=${token}`;
+
+  const transporter = nodemailer.createTransport({
+    host: env('SMTP_HOST'),
+    port: env('SMTP_PORT'),
+    auth: {
+      user: env('SMTP_USER'),
+      pass: env('SMTP_PASSWORD'),
+    },
+  });
+
+  const mailOptions = {
+    from: env('SMTP_FROM'),
+    to: email,
+    subject: 'Reset Your Password',
+    text: `Click on this link to reset your password: ${resetLink}`,
+    html: `<p>Click <a href="${resetLink}">here</a> to reset your password.</p>`,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    throw createHttpError(
+      500,
+      'Failed to send the email, please try again later.',
+    );
+  }
+};
+
+export const resetPassword = async (token, password) => {
+  let decodedToken;
+  try {
+    decodedToken = jwt.verify(token, env('JWT_SECRET'));
+  } catch (error) {
+    throw createHttpError(401, 'Token is expired or invalid.');
+  }
+
+  const user = await UserModel.findOne({ email: decodedToken.email });
+  if (!user) {
+    throw createHttpError(404, 'User not found!');
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+  await UserModel.updateOne({ _id: user._id }, { password: hashedPassword });
+
+  await SessionModel.deleteMany({ userId: user._id });
 };
